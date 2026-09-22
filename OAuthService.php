@@ -75,6 +75,15 @@ class OAuthService
 			$fileSize = filesize($filePath);
 			$content = $fileSize > 0 ? fread($fileToken, $fileSize) : '';
 			$fileTokenData = json_decode($content, true);
+			if ($fileTokenData && isset($fileTokenData['enc_token']) && defined("OAUTH_SECRET")) {
+				$decoded = base64_decode($fileTokenData['enc_token'], true);
+				if ($decoded !== false && mb_strlen($decoded, '8bit') > SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES) {
+					$nonce      = mb_substr($decoded, 0, SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES, '8bit');
+					$ciphertext = mb_substr($decoded, SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES, null, '8bit');
+					$decrypted  = json_decode(sodium_crypto_aead_xchacha20poly1305_ietf_decrypt($ciphertext, '', $nonce, OAUTH_SECRET), true);
+					if ($decrypted !== false) $fileTokenData = $decrypted;
+				}
+			}
 
 			// If a token was provided as an argument, convert expires_in to expires_at
 			if ($tokenData) {
@@ -103,7 +112,16 @@ class OAuthService
 			if ($tokenData) {
 				rewind($fileToken);          // Move pointer to the beginning
 				ftruncate($fileToken, 0);     // Clear existing file content
-				fwrite($fileToken, json_encode($tokenData));
+				$saveData = $tokenData;
+				// try to encrypt the token before saving
+				if (defined("OAUTH_SECRET")) {
+					$nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
+					$ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(json_encode($tokenData), '', $nonce, OAUTH_SECRET);
+					$saveData = [
+						'enc_token' => base64_encode($nonce . $ciphertext)
+					];
+				}
+				fwrite($fileToken, json_encode($saveData));
 				fflush($fileToken);          // Flush output before releasing lock				
 			}
 

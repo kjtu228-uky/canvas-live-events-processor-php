@@ -30,6 +30,7 @@ define('CANVAS_URL', 'https://your.instructure.com'); // ← update with your Ca
 define('CLIENT_ID', 'YOUR_CLIENT_ID'); // ← update with your Client ID; see instructions in auth.php
 define('CLIENT_SECRET', 'YOUR_CLIENT_SECRET'); // ← update with your Client Secret; see instructions in auth.php
 define('REDIRECT_URI', '<YOUR_URI_PATH>/auth.php');  // ← update with the URI to your host (not your Canvas path)
+define('OAUTH_SECRET', '32_character_token_encryption_key'); // ← enter a 32-character encryption key that is used to encrypt the token saved in the file
 
 // ─── Handlers Configuration ─────────────────────────────────────────────────
 /* Handlers are classes that extend handlers/LiveEventsHandler.php and should be
