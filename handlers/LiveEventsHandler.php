@@ -192,11 +192,9 @@ class LiveEventsHandler
 		return is_array($result) ? $result : null;
 	}
 
-	protected function canvasApiPut(string $endpoint, array $data = []): ?array
+	protected function canvasApiPut(string $endpoint, array $data = []): mixed
 	{
-		$result = $this->canvasApiRequest('PUT', $endpoint, $data);
-
-		return is_array($result) ? $result : null;
+		return $this->canvasApiRequest('PUT', $endpoint, $data);
 	}
 
 	protected function canvasApiDelete(string $endpoint): bool
