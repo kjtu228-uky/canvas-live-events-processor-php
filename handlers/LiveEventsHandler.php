@@ -15,7 +15,7 @@ class LiveEventsHandler
 {
 	public function handle(array $claims): void
 	{
-		logMessage('Processing event ' . $claims['metadata']['event_name']);
+		logMessage('Processing event ' . $claims['metadata']['event_name'], DEBUG_MODE);
 	}
 
 	/**
@@ -57,8 +57,10 @@ class LiveEventsHandler
 
 			case 'PUT':
 				$options[CURLOPT_CUSTOMREQUEST] = 'PUT';
-				$options[CURLOPT_POSTFIELDS] = http_build_query($data);
-				$options[CURLOPT_HTTPHEADER][] = 'Content-Type: application/x-www-form-urlencoded';
+				$jsonPayload = json_encode($data);
+				$options[CURLOPT_POSTFIELDS] = $jsonPayload;
+				$options[CURLOPT_HTTPHEADER][] = 'Content-Type: application/json';
+				$options[CURLOPT_HTTPHEADER][] = 'Content-Length: ' . strlen($jsonPayload);
 				break;
 
 			case 'DELETE':
@@ -141,7 +143,7 @@ class LiveEventsHandler
 			curl_close($ch);
 
 			if ($httpCode !== 200 || $response === false) {
-				error_log("Canvas API error: HTTP {$httpCode}\n  {$response}");
+				error_log("Canvas API error: HTTP {$httpCode}\n  {$response}\n  Endpoint: {$endpoint}");
 				return null;
 			}
 
